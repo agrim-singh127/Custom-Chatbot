@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+nbconvert
+powerbiclient
+chainlit
+pydantic
+langchain
+langchain-community
+openai
+snowflake-connector-python
+snowflake-snowpark-python
+snowflake-sqlalchemy
+pyodbc

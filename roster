@@ -1,0 +1,214 @@
+import os
+import pandas as pd
+from dotenv import load_dotenv
+import snowflake.connector
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+import pyodbc
+
+load_dotenv()
+
+account = os.getenv('SNOWFLAKE_ACCOUNT')
+user= os.getenv('SNOWFLAKE_USER')
+warehouse= os.getenv('SNOWFLAKE_WAREHOUSE')
+database= os.getenv('SNOWFLAKE_DATABASE')
+schema= os.getenv('SNOWFLAKE_SCHEMA')
+role= os.getenv('SNOWFLAKE_ROLE')
+private_key_password= os.getenv('SNOWFLAKE_PRIVATEKEY_PASSWORD')
+
+
+private_key_string='''-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFHDBOBgkqhkiG9w0BBQ0wQTApBgkqhkiG9w0BBQwwHAQIcYMMkI4o24sCAggA
+MAwGCCqGSIb3DQIJBQAwFAYIKoZIhvcNAwcECOr0Ka973lzfBIIEyEaFMO1Hom+F
+wJHBsApn+sHraqFGPiD+bOqpIRZfDvmZAbNpBoQbZIumtnFpwfcw+IBkXLoY6lC5
+C1RACOMJm7m2vj9rm2Xv4csWuTKEzc8nk+pCJtt9UA7QxyaSG70CAhz5JaHtCcDb
+xhpFUrr2o0gdYYf7BBH2TQGVRd14jPbqmeU32iDEUcO6BU89E9q3vbu/XxiY3aUh
+H25MBFwP7LASDSf2RLwIijdl0xQFPK/FSkwWP/noQgg+KN2vsXeIfCYwlFuzdTCQ
+8dMuvzjqCn4D31cEM8sGdJPB5+Qz+0xGkna8uapoc2+b2k/vNA5uaUd1iKB2ybI8
+aP/vh2b/r+si7aVQIwuOvJPsnlT918mYieTA7lZ8VLfASBz2t/bneTIBQ9VPuigK
+0MsvgG49ANMs6TAZ1m4RsnDjL/wM55IvBUFWQRy3dikCQoAmog3tjjgDYf+hWp/l
+ERZabC8/9CcBaHT/sSukYM3rCafr1/vez90BERuSFRCdwQSVM8GdlXKxvsgUwGct
+/hSiiMHGTAkftmVl6qgkQO9sAxM0rzC7k4ThypVlRbk95eUwBitUqznnL+mCJykA
+3+Pr7FPCQY4Lxwulg0ltnWXDsUT1NDPUW33YzqglIfhe1MGByygnAZtPUSrqs4Fy
+qlrVz0dq6yvx1gFi3v5H+vuCMXudQGh3zxye9DIG6WBL6lXCB8jnVDJMFYGzl0WS
+FoRT68ImvqULGix5LvGZnnwLSgBVfLczg7dzqa+CXmk7YfCS9SPpI8489/v5h0j0
+VENtcW8Gnq6Sp6Q0rrCEQS88IAERsH467geaOnZznv6b2gqB68qIVrt9wXn0nqpt
+oVg8pR79Ep6pPOBsykgF19WQJQbU3cDwLB1ff4yS7eBX4ZViEtlftRTvUGF9DctY
+2Z5Al/yoL9VWFORyWJ56vsaKdUt4t/rXTGhzPPiYskazX+NPv0xXfxVSGMbfdpar
+dbfoWSKBmDsx3ssyKtio5yYhrA1QhJpOWEGl1Hvi4TjnRg3zhRtDXzxWlMsSSG5X
+GKPm6sMpJVTV0XL0vcjT+40VvuIMyMKCHBRDWcJm9WdIY9uIDGwlg2TcVYkXFo+o
+nCQdDdZvauss16ZgCSDxqFsZYXj0J8RpwYLITNrsMuit5c5n/cEkm8JicPUA8Kyq
+X2TwnVzRDITr5+IGE5N07ALkmIzif2nAnINARUOz6Z0t/jKUuUvIt2RslYc9gH7g
+LSUropF4vBcwk+tfzMej/R5/0l8gxUnvffAIqFWTMCxnCb0ryA7iLAMqaLH0ZiAb
+hmurU4Qz+AOMzTu+0lCA39xIHOQ+FOXUbQmF3tYkMvV1fDgR4Ob9YH9VgLuuwBm/
+SuQJ2gdz7zhYxFAlBsjz9ddQabJsRr5r82fv5cbmdcrehw9EN04PzBJg/Ccyz8RJ
++jYJgR7Tk5PhaeMAdGMO7+D+7mkuOIVhk7K0p4fVcSda0+2khUK2JsTtXMKhihxJ
+zuMokPksJehmbOt6XDhXsPREwWbsAy5RF0zBteovzRkmrr6MqoR5r8Iu8vDe4WdZ
+nGc6P9S0MQLcsr0sk0BIfE2XuUz9CtcH/Te+U7kVXfaY7Qt/gfog5hs6QaNYem3j
+lzcRWvqP3dDjER1gXeku0w==
+-----END ENCRYPTED PRIVATE KEY-----'''
+ 
+
+
+def load_private_key_string(private_key_string, private_key_password):
+    """
+    Load the encrypted private key from a string using a password
+    """
+    try:
+        # Convert the string key to bytes
+        private_key_bytes = private_key_string.encode()
+        p_key = serialization.load_pem_private_key(
+            private_key_bytes,
+            password=private_key_password.encode(),  # Convert password to bytes
+            backend=default_backend()
+        )
+        print("Successful encryption of private key")
+        return p_key.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+    except Exception as e:
+        print(f"Error loading private key: {str(e)}")
+        return None
+
+
+private_key = load_private_key_string(private_key_string, private_key_password)
+
+
+conn = None
+
+# Define connection parameters
+connection_params = {
+    'account': account,
+    'user': user,
+    'warehouse': warehouse,
+    'database':database,
+    'schema':schema,
+    'role':role,
+    "private_key": private_key,
+    'client_session_keep_alive': True
+}
+
+# Database connection setup
+server = 'a.b.c.d'  # e.g., 'localhost' or '127.0.0.1'
+database = 'chatbot_database'
+username = 'abc'
+password = 'def'
+conn_str = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+
+
+
+#Function to establish a Snowflake connection (keeping it synchronous since Snowflake connector is not async)
+def get_snowflake_connection():
+    global conn
+    if conn is None:
+        print("Authenticating and establishing Snowflake connection...")
+        conn = snowflake.connector.connect(**connection_params)
+        print("Connection established.")
+    else:
+        print("Reusing existing Snowflake connection.")
+    return conn
+
+def get_mssql_connection():
+    try:
+        global conn
+        if conn is None:
+            # print('connection  starting.......')
+            conn = pyodbc.connect(conn_str)
+            # cursor = conn.cursor()
+            # print("Connection successful!")
+        else:
+            print('Reusing existing MS-SQL connection.')
+
+        return conn
+    except Exception as e:
+        print("Error connecting to database:", e)
+
+
+
+
+def query_mssql(query):
+
+    try:
+        conn = get_mssql_connection()
+        result, cur = _execute_query(conn=conn, query=query)
+        return result, cur
+    except Exception as e:
+        print(f'error raise from query snowflake :: {e}')
+
+def _execute_query(conn, query):
+    with conn.cursor() as cur:
+        cur.execute(query)
+        return cur.fetchall(), cur
+
+
+def get_roster_data():
+    try:
+        query = f"""SELECT * FROM ROSTER"""
+        rows, cur = query_mssql(query=query)
+        # Fetch the column names
+        cols = [col[0] for col in cur.description]
+
+        final=[]
+        for rec in rows:
+            dic={k:v  for k,v in zip(cols,rec)}
+            try:
+                final.append(dic)
+            except:
+                print("No Rec Found!!!!")
+                
+        df = pd.DataFrame(final)
+        return df
+    except Exception as e:
+        print(f'Error raised from get roster table :: {e}')
+
+
+
+
+def check_user_manager_rep(email):
+    try:
+        df = get_roster_data()
+        print('----data shape-----', df.shape)
+        for index, row in df.iterrows():
+            if email == row['MANAGERS_NATION_EMAIL']:
+                return 'National Manager', None
+            
+            elif email == row['MANAGERS_REGION_EMAIL']:
+                return 'Regional Manager', None
+            
+            elif email == row['MANAGERS_DISTRICT_EMAIL']:
+                return 'District Manager', None
+            
+            elif email == row['EMAIL']:
+                return 'Representative', row['FIRST_NAME'] + ' ' + row['LAST_NAME']
+            
+            else:
+                pass                
+    except Exception as e:
+        print(f'Error raised from validation of user email :: {e}')
+
+def final_filteration(email, table_name):
+    try:
+        email_cat_res, name = check_user_manager_rep(email=email)
+        if table_name[0] == 'OVERALL_PERFORMANCE':
+            return email_cat_res, name
+            
+        elif table_name[0] == 'GOALS':
+            print(email_cat_res)
+            return email_cat_res, None
+        
+        else:
+            return None, None
+    except Exception as e:
+        print(f'error from final filteration :: {e}')
+        
+        
+def main():
+    df = get_roster_data()
+    if df is not None:
+        validation_of_user_email('dean.gass@sdf.com')
+
+if __name__ == "__main__":
+    main()
