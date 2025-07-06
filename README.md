@@ -1,5 +1,6 @@
 # Introduction 
-Advanced custom chatbot for specific reports/dashboards. It can be launched into frontend of websites and also in power bi reports via custom visuals. It is superior and economic to what copilot can provide, especially when data is large, complex where security and rls restrictions are the priority.  
+Advanced custom chatbot for specific reports/dashboards. It can be launched into frontend of websites and also in power bi reports via custom visuals. It is superior and economic to what copilot can provide, especially when data is large, complex where security and rls restrictions are the priority.
+If you find this project helpful, feel free to ⭐ star it or 🍴 fork it. Your support is appreciated and helps the project grow!
 
 # Getting Started
 Setting the code up and running requires some effort:
