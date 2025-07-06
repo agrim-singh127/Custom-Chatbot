@@ -22,3 +22,6 @@ Happy to collaborate with such as expert to push it next level.
 
 # Licensing
 Need to notify owner, purpose for using. send mail at: agrimkhiladigref@gmail.com
+
+# Page Views
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=agrim-singh127.Custom-Chatbot) 
